@@ -53,14 +53,36 @@ async function findCoinId(query) {
     console.error("❌ Error searching for coin:", error.message);
     return null;
   }
-} app.post("/a2a", async (req, res) => {
+}
+
+// ✅ A2A Endpoint for Telex (with safe error handling)
+app.post("/a2a", async (req, res) => {
   try {
-    const { id, method, params } = req.body;
+    const { id, method, params } = req.body || {};
 
     console.log("📩 Incoming request:", JSON.stringify(req.body, null, 2));
 
+    // Handle empty or invalid payloads safely (Thanos-safe)
+    if (!method || !params) {
+      return res.status(200).json({
+        jsonrpc: "2.0",
+        id: id || null,
+        error: {
+          code: -32600,
+          message: "Invalid or empty request payload",
+        },
+      });
+    }
+
     if (method !== "sendMessage" || !params?.text) {
-      throw new Error("Invalid method or parameters");
+      return res.status(200).json({
+        jsonrpc: "2.0",
+        id: id || null,
+        error: {
+          code: -32601,
+          message: "Invalid method or parameters",
+        },
+      });
     }
 
     const text = params.text.toLowerCase();
@@ -114,102 +136,24 @@ async function findCoinId(query) {
     };
 
     console.log("📤 Response sent:", JSON.stringify(response, null, 2));
-    res.json(response);
+    res.status(200).json(response);
   } catch (err) {
     console.error("❌ A2A error:", err.message);
 
-    res.status(500).json({
+    // Always respond with 200 (Thanos-safe)
+    res.status(200).json({
       jsonrpc: "2.0",
       id: req.body?.id || null,
       error: {
         code: -32000,
-        message: `Internal server error: ${err.message}`,
+        message: `Internal error: ${err.message}`,
       },
     });
   }
 });
-
-
 
 // ✅ Health check route
 app.get("/", (req, res) => res.send("🚀 Crypto Tracker Agent with dynamic search is live!"));
 
 // ✅ Start server
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
-
-
-
-
-// // ✅ A2A Endpoint for Telex
-// app.post("/a2a", async (req, res) => {
-//   const { id, method, params } = req.body;
-
-//   console.log("📩 Incoming request:", JSON.stringify(req.body, null, 2));
-
-//   if (method !== "sendMessage" || !params?.text) {
-//     return res.status(400).json({
-//       jsonrpc: "2.0",
-//       id,
-//       error: {
-//         code: -32601,
-//         message: "Invalid method or parameters",
-//       },
-//     });
-//   }
-
-//   const text = params.text.toLowerCase();
-//   const channelId = params.channelId;
-//   let reply = "";
-
-//   try {
-//     // Step 1️⃣ — Try to find coin from supported list or via search
-//     let coinKey = Object.keys(supportedCoins).find((key) => text.includes(key));
-//     let coinId = coinKey ? supportedCoins[coinKey] : await findCoinId(text);
-
-//     // Step 2️⃣ — If coin found, get live price
-//     if (coinId) {
-//       const price = await getCryptoPrice(coinId);
-//       if (price) {
-//         reply = `💰 The current price of **${coinId.toUpperCase()}** is **$${price.toLocaleString()} USD**`;
-//       } else {
-//         reply = `⚠️ I couldn’t fetch the latest price for ${coinId}. Try again later or ask about another coin.`;
-//       }
-//     } else {
-//       // Step 3️⃣ — No coin found → graceful AI fallback
-//       const aiResponse = await cryptoTrackerBot.run(text);
-
-//       if (aiResponse?.output) {
-//         reply = aiResponse.output;
-//       } else {
-//         reply =
-//           "🤖 I specialize in live cryptocurrency prices and info — try asking about any coin like Bitcoin or Solana!";
-//       }
-//     }
-
-//     // ✅ Step 4️⃣ — Construct valid A2A response
-//     const response = {
-//       jsonrpc: "2.0",
-//       id,
-//       result: {
-//         type: "message",
-//         channelId,
-//         text: reply,
-//       },
-//     };
-
-//     console.log("📤 Response sent:", JSON.stringify(response, null, 2));
-//     res.json(response);
-//   } catch (error) {
-//     console.error("❌ Error handling A2A request:", error);
-
-//     res.json({
-//       jsonrpc: "2.0",
-//       id,
-//       result: {
-//         type: "message",
-//         channelId: params?.channelId || "unknown",
-//         text: "⚠️ Oops! Something went wrong while processing your request.",
-//       },
-//     });
-//   }
-// });

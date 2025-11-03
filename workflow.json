@@ -1,0 +1,24 @@
+{
+  "active": true,
+  "category": "utilities",
+  "description": "A crypto tracker bot that provides real-time prices for cryptocurrencies.",
+  "id": "cryptoTrackerBot123",
+  "long_description": "You are a helpful crypto tracker bot that fetches live cryptocurrency prices and market information using the CoinGecko API. Users can ask for the price of any coin by name or symbol.",
+  "name": "crypto-tracker-bot",
+  "nodes": [
+    {
+      "id": "crypto_tracker_bot_node",
+      "name": "crypto-tracker-bot",
+      "parameters": {},
+      "position": [500, 100],
+      "type": "a2a/mastra-a2a-node",
+      "typeVersion": 1,
+      "url": "https://flat-roses-switch.loca.lt"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "short_description": "Tracks live crypto prices using CoinGecko"
+}

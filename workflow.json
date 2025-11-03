@@ -13,7 +13,7 @@
       "position": [500, 100],
       "type": "a2a/mastra-a2a-node",
       "typeVersion": 1,
-      "url": "https://cryptomate-production.up.railway.app"
+      "url": "https://cryptomate-production.up.railway.app/a2a"
     }
   ],
   "pinData": {},

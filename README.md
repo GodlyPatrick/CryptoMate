@@ -1,24 +1,24 @@
 
-````markdown
-# 🪙 CryptoMate
+###  CryptoMate
 
 CryptoMate is a friendly Telex AI agent that provides real-time cryptocurrency prices 🧠💰  
 It uses the CoinGecko API to fetch live data and answer crypto-related questions.
 
 ---
 
-## 🚀 Features
+### 🚀 Features
 - Get **live prices** for any cryptocurrency  
 - Ask **crypto-related questions** (e.g., Bitcoin halving, creation date, etc.)  
 - Works seamlessly with **Telex A2A** integration  
 
 ---
 
-## ⚙️ Setup Instructions
+### ⚙️ Setup Instructions
 
 ### 1️⃣ Clone the repository
+
 ```bash
-git clone https://github.com/yourusername/cryptomate.git
+git clone https://github.com/GodlyPatrick/CryptoMate.git
 cd cryptomate
 ````
 

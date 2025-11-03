@@ -59,6 +59,8 @@ async function findCoinId(query) {
 app.post("/a2a", async (req, res) => {
   const { id, method, params } = req.body;
 
+  console.log("📩 Incoming request:", JSON.stringify(req.body, null, 2));
+
   if (method !== "sendMessage" || !params?.text) {
     return res.status(400).json({
       jsonrpc: "2.0",
@@ -74,46 +76,61 @@ app.post("/a2a", async (req, res) => {
   const channelId = params.channelId;
   let reply = "";
 
-  // Step 1️⃣ — Try matching supported coins
-  let coinKey = Object.keys(supportedCoins).find((key) => text.includes(key));
-  let coinId = coinKey ? supportedCoins[coinKey] : null;
+  try {
+    // Step 1️⃣ — Try to find coin from supported list or via search
+    let coinKey = Object.keys(supportedCoins).find((key) => text.includes(key));
+    let coinId = coinKey ? supportedCoins[coinKey] : await findCoinId(text);
 
-  // Step 2️⃣ — If not in supported list, search dynamically
-  if (!coinId) {
-    coinId = await findCoinId(text);
-  }
-
-  // Step 3️⃣ — If we found a coin, fetch its price
-  if (coinId) {
-    const price = await getCryptoPrice(coinId);
-    if (price) {
-      reply = `💰 The current price of **${coinId.toUpperCase()}** is **$${price.toLocaleString()} USD**`;
+    // Step 2️⃣ — If coin found, get live price
+    if (coinId) {
+      const price = await getCryptoPrice(coinId);
+      if (price) {
+        reply = `💰 The current price of **${coinId.toUpperCase()}** is **$${price.toLocaleString()} USD**`;
+      } else {
+        reply = `⚠️ I couldn’t fetch the latest price for ${coinId}. Try again later or ask about another coin.`;
+      }
     } else {
-      reply = `⚠️ Sorry, I couldn't fetch the price for ${coinId}.`;
+      // Step 3️⃣ — No coin found → graceful AI fallback
+      const aiResponse = await cryptoTrackerBot.run(text);
+
+      if (aiResponse?.output) {
+        reply = aiResponse.output;
+      } else {
+        reply =
+          "🤖 I specialize in live cryptocurrency prices and info — try asking about any coin like Bitcoin or Solana!";
+      }
     }
-  } else {
-    // Step 4️⃣ — Fallback to Mastra AI for general crypto talk
-    const aiResponse = await cryptoTrackerBot.run(text);
-    reply = aiResponse.output || "🤖 I can provide real-time crypto prices — try asking for any coin!";
+
+    // ✅ Step 4️⃣ — Construct valid A2A response
+    const response = {
+      jsonrpc: "2.0",
+      id,
+      result: {
+        type: "message",
+        channelId,
+        text: reply,
+      },
+    };
+
+    console.log("📤 Response sent:", JSON.stringify(response, null, 2));
+    res.json(response);
+  } catch (error) {
+    console.error("❌ Error handling A2A request:", error);
+
+    res.json({
+      jsonrpc: "2.0",
+      id,
+      result: {
+        type: "message",
+        channelId: params?.channelId || "unknown",
+        text: "⚠️ Oops! Something went wrong while processing your request.",
+      },
+    });
   }
-
-  // ✅ Step 5️⃣ — Respond in valid A2A JSON-RPC format
-  const response = {
-    jsonrpc: "2.0",
-    id,
-    result: {
-      type: "message",
-      channelId,
-      text: reply,
-    },
-  };
-
-  console.log("Response sent:", response);
-  res.json(response);
 });
 
-// Health route
+// ✅ Health check route
 app.get("/", (req, res) => res.send("🚀 Crypto Tracker Agent with dynamic search is live!"));
 
-// Start server
+// ✅ Start server
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

@@ -74,7 +74,8 @@ app.post("/a2a", async (req, res) => {
       });
     }
 
-    if (method !== "sendMessage" || !params?.text) {
+   if ((method !== "sendMessage" && method !== "message/send") || !params?.text) {
+
       return res.status(200).json({
         jsonrpc: "2.0",
         id: id || null,
@@ -85,7 +86,7 @@ app.post("/a2a", async (req, res) => {
       });
     }
 
-    const text = params.text.toLowerCase();
+    const text = (params.text || params.message || "").toLowerCase();
     const channelId = params.channelId;
     let reply = "";
 
